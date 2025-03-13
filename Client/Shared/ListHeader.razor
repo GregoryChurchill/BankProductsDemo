@@ -1,0 +1,18 @@
+﻿<div class="content-title-group">
+    <NavLink href="@RoutePath">
+        <h2 class="title">@Title</h2>
+    </NavLink>
+
+@*     <button class="button refresh-button"
+            @onclick="HandleRefresh"
+            aria-label="refresh">
+        <i class="fas fa-sync" aria-hidden="true" />
+    </button> *@
+    <br />
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; }
+    [Parameter] public string RoutePath { get; set; }
+    [Parameter] public EventCallback HandleRefresh { get; set; }
+}

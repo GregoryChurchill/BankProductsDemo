@@ -1,0 +1,18 @@
+﻿@page "/compare"
+@using Markdig
+
+<ListHeader Title="Compare" RoutePath="/compare" />
+<div class="content-container">
+    @Html
+</div>
+@code{
+    public MarkupString Html { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var md = "| Feature | Westpac Business Term Deposit | Judo Term Deposits |\r\n|---|---|---|\r\n| Bank | Westpac | JudoBank |\r\n| Category | TERM_DEPOSITS | TERM_DEPOSITS |\r\n| Product Name | Business Term Deposit | Judo Term Deposits |\r\n| Description | A Westpac Business Term Deposit lets you invest your money with a fixed interest rate. | Earn a competitive, fixed interest rate on your deposit with Judo Bank. |\r\n| Terms | 3 months | 3 months |\r\n| Interest Rate | 0.0325% p.a. | 0.0495% p.a. |\r\n| Calculation Frequency | Daily | Daily |\r\n| Application Frequency | Quarterly | Quarterly |\r\n| Tiers | 5000 to 2000000 | N/A |\r\n| Additional Value | Interest paid at maturity | N/A |";
+        var pipeline = new Markdig.MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+
+        Html = (MarkupString)Markdown.ToHtml(md, pipeline);
+    }
+}

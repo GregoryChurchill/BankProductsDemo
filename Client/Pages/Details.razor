@@ -1,0 +1,105 @@
+﻿@page "/details/{ProductId}"
+@using Newtonsoft.Json
+@inject HttpClient httpClient
+@inject NavigationManager navigationManager
+
+@if (product == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="card edit-detail">
+        <header class="card-header">
+            <p class="card-header-title">
+                @selectedBank: @product.detailData.Name
+            </p>
+        </header>
+        <div class="card-content">
+            <div class="content">
+                @if (product.detailData.ProductId != "")
+                {
+                    <label class="label" for="id">id</label>
+                    <input name="Product ID"
+                           class="input"
+                           value="@product.detailData.ProductId"
+                           readonly="readonly" />
+                }
+                <InputDetail Name="Name"
+                             Placeholder=""
+                             @bind-Value="product.detailData.Name" />
+                <InputDetail Name="Description"
+                             Placeholder=""
+                             @bind-Value="product.detailData.Description" />
+            </div>
+        </div>
+        <footer class="card-footer ">
+            <ButtonFooter Class="cancel-button"
+                          IconClasses="fas fa-undo"
+                          OnClick="@CancelProduct"
+                          Label="Cancel" />
+            <ButtonFooter Class="save-button"
+                          IconClasses="fas fa-save"
+                          OnClick="@Save"
+                          Label="Save" />
+        </footer>
+    </div>
+}
+
+@code {
+    private BankData bankData;
+    private Product product;
+    private string selectedBank;
+
+    [Parameter] public string ProductId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshData();
+
+        foreach (var bank in bankData.data)
+        {
+            foreach (var bankProduct in bank.Products)
+            {
+                if (bankProduct.detailData.ProductId == ProductId)
+                {
+                    selectedBank = bank.Name;
+                    product = bankProduct;
+
+                    break;
+                }
+            }
+        }
+    }
+
+    private async Task RefreshData()
+    {
+        var response = await httpClient.GetAsync($"api/GetProducts");
+
+        if (response.IsSuccessStatusCode)
+        {
+            var json = await response.Content.ReadAsStringAsync();
+
+            bankData = JsonConvert.DeserializeObject<BankData>(json);
+        }
+    }
+
+    private void CancelProduct()
+    {
+        navigationManager.NavigateTo("/");
+    }
+
+    private async Task Save()
+    {
+        // if (product.detailData.ProductId == "")
+        // {
+        //     await httpClient.PostAsJsonAsync("api/products", product);
+        // }
+        // else
+        // {
+        //     await httpClient.PutAsJsonAsync("api/products", product);
+        // }
+
+        // navigationManager.NavigateTo("/");
+    }
+}

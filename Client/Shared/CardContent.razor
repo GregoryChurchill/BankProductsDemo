@@ -1,0 +1,111 @@
+﻿@using Syncfusion.Blazor.Buttons
+@inject IJSRuntime jsRuntime
+
+<head>
+    <style>
+        table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+        }
+
+        th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left; /* Align text to the left */
+        }
+
+        th {
+        background-color: #f2f2f2; /* Light gray background for header */
+        font-weight: bold;
+        }
+    </style>
+</head>
+
+<div class="card-content">
+    <div class="row">
+        <div class="col col-12">
+            <img src="@BankLogoUrl" alt="@BankName" class="image-height-35">
+        </div>  
+    </div>
+    <div class="row">
+        <div class="col col-12 product-name">@BankName | @ProductName</div>
+    </div>
+    <div class="row">
+        <div class="col col-12 product-rate">@HighestRate
+            @if (!string.IsNullOrEmpty(@HighestTerm))
+            {
+                <span class="product-details">&nbsp;&nbsp;for @HighestTerm</span>
+            }
+        </div>
+    </div>
+    <div class="row">
+        <div class="product-description">@Description</div>
+    </div>
+    <div class="row">
+    @if (TermRates != null && TermRates.Count > 0)
+    {
+        @if (TermPeriodsSelected > 1)
+        {
+                <table class="rates-table">
+                    <thead>
+                        <tr>
+                            <th>Term</th>
+                            <th>Rate</th>
+                            <th>Interest</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var termRate in TermRates)
+                        {
+                        <tr>
+                            <td>@termRate.Term</td>
+                            <td>@termRate.Percent</td>
+                            <td>@termRate.Frequency</td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+        }
+        else if (TermPeriodsSelected == 1)
+        {
+                <div class="col col-2 product-label">Rate:</div>
+                <div class="col col-10 product-details">
+                    @TermRates.FirstOrDefault().Percent for @TermRates.FirstOrDefault().Term with interest paid @TermRates.FirstOrDefault().Frequency
+                </div>
+        }
+    }
+    </div>
+    <div class="row">
+        <div class="col col-2 product-label">Min-Max Deposit:</div>
+        <div class="col col-10 product-details">@MinToMaxDeposit</div>
+    </div>
+    <div class="row">
+        <div class="col col-2 product-label">Last Refreshed:</div>
+        <div class="col col-10 product-details">@LastRefreshed</div>
+    </div>
+    <div class="row">
+       <div class="col col-12"><SfButton @ref="VisitSiteBtn" @onclick="VisitSiteUrl" IsPrimary="false" Content="Visit Site" CssClass="buttonVisitURL"></SfButton></div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string BankName { get; set; }
+    [Parameter] public string BankLogoUrl { get; set; }
+    [Parameter] public string ProductName { get; set; }
+    [Parameter] public string Description { get; set; }
+    [Parameter] public string HighestRate { get; set; }
+    [Parameter] public string HighestTerm { get; set; }
+    [Parameter] public List<TermRate> TermRates { get; set; }
+    [Parameter] public string MinToMaxDeposit { get; set; }
+    [Parameter] public int TermPeriodsSelected { get; set; }
+    [Parameter] public string ApplyUrl { get; set; }
+    [Parameter] public string LastRefreshed { get; set; }
+
+    SfButton VisitSiteBtn;
+
+    public async Task VisitSiteUrl()
+    {
+        await jsRuntime.InvokeAsync<object>("open", ApplyUrl, "_blank");
+    }
+}

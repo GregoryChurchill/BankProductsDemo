@@ -1,0 +1,236 @@
+﻿@page "/products"
+@using Newtonsoft.Json
+@using Syncfusion.Blazor.Buttons
+@using System.Text
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Inputs
+@inject HttpClient httpClient
+@inject NavigationManager navigationManager
+
+<ListHeader Title="Term Deposits" RoutePath="/products" />
+
+<div class="margin-bottom">
+    <div class="row margin-bottom">
+        <div class="col col-lg-3">
+            <SfNumericTextBox @bind-Value="@DepositAmount" TValue="double?" Format="c0" Step="10000" Currency="AUD" Placeholder="Deposit Amount" FloatLabelType="@FloatLabelType.Always" Width="180px"></SfNumericTextBox>
+        </div>
+        <div class="col col-lg-3">
+            <SfAutoComplete TValue="string" TValue="string" @bind-Value="@SelectedBankName" TItem="CandidateBank" Placeholder="Provider" FloatLabelType="@FloatLabelType.Always" DataSource="@CandidateBanks" Width="290px">
+                <AutoCompleteTemplates TItem="CandidateBank">
+                    <ItemTemplate>
+                        <div>
+                            <span>@((context as CandidateBank).NameDisplay)</span>
+                            <span><img src="@((context as CandidateBank).LogoURL)" class="image-height-20" title="@((context as CandidateBank).LastRefreshedFormatted)" /></span>&nbsp;
+                        </div>
+                    </ItemTemplate>
+                </AutoCompleteTemplates>
+                <AutoCompleteFieldSettings Text="NameDisplay" Value="NameDisplay" />
+            </SfAutoComplete>
+        </div>
+    </div>
+    <div class="row margin-bottom">
+        <div class="col col-lg-3">
+            <SfMultiSelect Text="@DefaultTerm" TValue="string[]" @bind-Value="@DepositTermValues" TItem="DepositTerm" Placeholder="Term" FloatLabelType="@FloatLabelType.Always" Mode="@VisualMode.CheckBox" DataSource="@DepositTerms" ShowSelectAll="true" PopupHeight="350px" Width="180px">
+                <MultiSelectFieldSettings Text="Name" Value="Code"></MultiSelectFieldSettings>
+            </SfMultiSelect>
+        </div>
+        <div class="col col-lg-3">
+            <SfDropDownList TItem="SortByOption" TValue="string" PopupHeight="230px" Placeholder="Sort By" FloatLabelType="@FloatLabelType.Always" @bind-Value="@SortByIndex" DataSource="@SortByOptions" Width="290px">
+                <DropDownListEvents TItem="SortByOption" TValue="string" ValueChange="LoadGrid" />
+                <DropDownListFieldSettings Text="Text" Value="ID" />
+            </SfDropDownList>
+        </div>
+    </div>
+    <div>
+        <SfCheckBox @bind-Checked="@ShowAll" ValueChange="LoadGrid" TChecked="bool">Show All</SfCheckBox>
+    </div>
+</div>
+<div>
+    <SfButton @ref="UpdateResultsBtn" @onclick="UpdateResults" IsPrimary="false" Content="Update Results" CssClass="buttonStandard"></SfButton>
+</div>
+<div class="margin-bottom">
+    <SfSpinner @bind-Visible="@SpinnerVisible"></SfSpinner>
+    <ProductList ErrorMessage="@errorMessage"
+    TermDeposits="@AllTermDeposits"
+    TermPeriodsSelected=@AllFilteredTermDeposits.TermPeriodsSelected 
+    ShowProduct="@ShowProduct"
+    ShowCountTotal="@ShowAll"
+    CountTotal="@AllFilteredTermDeposits.CountTotal"
+    CountFilteredTotal="@AllFilteredTermDeposits.CountFilteredTotal"
+    CountFiltered="@AllFilteredTermDeposits.CountFiltered" />
+</div>
+<div class="centered">
+    <SfButton @ref="ShowRemainingBtn" @onclick="ShowRemainingRecords" IsPrimary="false" Content="Show All" CssClass="buttonStandard"></SfButton>
+</div>
+@code {
+    private List<CandidateBank> CandidateBanks { get; set; }
+    private string SelectedBankName { get; set; }
+    private string errorMessage = "";
+    public bool SpinnerVisible;
+    private BankDataFilteredTermDeposits AllFilteredTermDeposits;
+    public List<TermDeposit> AllTermDeposits { get; set; }
+    public int[] TotalValue { get; set; }
+    string[] DepositTermValues = new string[0];
+    public double? DepositAmount { get; set; }
+    public string DefaultTerm = "3 months";
+    public string SortByIndex = "1"; // "Interest Rate - highest to lowest"
+    SfButton UpdateResultsBtn;
+    SfButton ShowRemainingBtn;
+    private bool ShowRemaining;
+    private bool ShowAll;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (DepositAmount == null)
+                DepositAmount = 10000;
+
+            DepositTermValues = DepositTermValues.Append("3 months").ToArray();
+
+            await LoadCandidateBanks();
+            await LoadGrid();
+        }
+        catch(Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private async Task LoadCandidateBanks()
+    {
+        if (CandidateBanks == null)
+        {
+            CandidateBanks = new List<CandidateBank>();
+        }
+
+        var response = await httpClient.GetAsync($"api/GetCandidateBanks?IncludeLastUpdated=false");
+
+        if (response.IsSuccessStatusCode)
+        {
+            var json = await response.Content.ReadAsStringAsync();
+
+            CandidateBanks = JsonConvert.DeserializeObject<List<CandidateBank>>(json);
+        }
+    }
+
+    private async Task LoadGrid()
+    {
+        this.SpinnerVisible = true;
+
+        if (DepositTermValues == null)
+        {
+            DepositTermValues = new string[0];
+            DepositTermValues = DepositTermValues.Append("3 months").ToArray();
+            DefaultTerm = "3 months";
+        }
+
+        var filterJson = JsonConvert.SerializeObject(new FilterTermDeposits(SelectedBankName, "TERM_DEPOSITS", DepositTermValues.ToList(), DepositAmount.ToString(), SortByIndex));
+
+        var content = new StringContent(filterJson, Encoding.UTF8, "application/json");
+
+        var response = await httpClient.PostAsync($"api/FilterTermDeposits?ShowRemaining={ShowRemaining}&ShowAll={ShowAll}", content);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var json = await response.Content.ReadAsStringAsync();
+
+            AllFilteredTermDeposits = JsonConvert.DeserializeObject<BankDataFilteredTermDeposits>(json);
+
+            AllTermDeposits = new List<TermDeposit>();
+
+            if (AllFilteredTermDeposits.TermDeposits.Count > 0)
+            {
+                foreach (var td in AllFilteredTermDeposits.TermDeposits)
+                {
+                    AllTermDeposits.Add(td);
+                }
+            }
+        }
+
+        if (ShowRemainingBtn != null)
+        {
+            ShowRemainingBtn.Disabled = ShowAll || (AllFilteredTermDeposits.CountFilteredTotal <= 10 || AllFilteredTermDeposits.CountFiltered == AllFilteredTermDeposits.CountFilteredTotal);
+        }
+
+        this.SpinnerVisible = false;
+    }
+
+    private async Task ShowRemainingRecords()
+    {
+        ShowRemaining = true;
+        ShowRemainingBtn.Disabled = true;
+
+        await LoadGrid();
+    }
+
+    public async Task UpdateResults()
+    {
+        ShowRemaining = false;
+        ShowRemainingBtn.Disabled = false;
+
+        await LoadGrid();
+    }
+
+    private string FormatDate(DateTime dateTime)
+    {
+        return dateTime.ToString("dddd, dd MMMM yyyy h:mm tt");
+    }
+
+    public class DepositTerm
+    {
+        public string Name { get; set; }
+        public string Code { get; set; }
+    }
+
+    List<DepositTerm> DepositTerms = new List<DepositTerm>
+    {
+        new DepositTerm() { Name = "1 month", Code = "1 month" },
+        new DepositTerm() { Name = "2 months", Code = "2 months" },
+        new DepositTerm() { Name = "3 months", Code = "3 months" },
+        new DepositTerm() { Name = "4 months", Code = "4 months" },
+        new DepositTerm() { Name = "5 months", Code = "5 months" },
+        new DepositTerm() { Name = "6 months", Code = "6 months" },
+        new DepositTerm() { Name = "7 months", Code = "7 months" },
+        new DepositTerm() { Name = "8 months", Code = "8 months" },
+        new DepositTerm() { Name = "9 months", Code = "9 months" },
+        new DepositTerm() { Name = "10 months", Code = "10 months" },
+        new DepositTerm() { Name = "11 months", Code = "11 months" },
+        new DepositTerm() { Name = "12 months", Code = "12 months" },
+        new DepositTerm() { Name = "13 months", Code = "13 months" },
+        new DepositTerm() { Name = "14 months", Code = "14 months" },
+        new DepositTerm() { Name = "15 months", Code = "15 months" },
+        new DepositTerm() { Name = "16 months", Code = "16 months" },
+        new DepositTerm() { Name = "17 months", Code = "17 months" },
+        new DepositTerm() { Name = "18 months", Code = "18 months" },
+        new DepositTerm() { Name = "19 months", Code = "19 months" },
+        new DepositTerm() { Name = "20 months", Code = "20 months" },
+        new DepositTerm() { Name = "21 months", Code = "21 months" },
+        new DepositTerm() { Name = "22 months", Code = "22 months" },
+        new DepositTerm() { Name = "23 months", Code = "23 months" },
+        new DepositTerm() { Name = "24 months", Code = "24 months" },
+        new DepositTerm() { Name = "36 months", Code = "36 months" },
+        new DepositTerm() { Name = "48 months", Code = "48 months" },
+        new DepositTerm() { Name = "60 months", Code = "60 months" },
+    };
+
+    private void ShowProduct(TermDeposit td)
+    {
+        navigationManager.NavigateTo($"/details/{td.ID}");
+    }
+
+    public class SortByOption
+    {
+        public string ID { get; set; }
+        public string Text { get; set; }
+    }
+
+    private List<SortByOption> SortByOptions = new List<SortByOption>()
+    {
+        new SortByOption(){ ID= "1", Text= "Interest Rate - highest to lowest" },
+        new SortByOption(){ ID= "2", Text= "Interest Rate - lowest to highest" },
+        new SortByOption(){ ID= "3", Text= "Provider - A to Z" },
+        new SortByOption(){ ID= "4", Text= "Provider - Z to A" },
+        new SortByOption(){ ID= "5", Text= "Last Updated" }
+     };
+}

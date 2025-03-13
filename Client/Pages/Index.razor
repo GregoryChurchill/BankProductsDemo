@@ -1,0 +1,56 @@
+﻿@page "/"
+@inject NavigationManager NavigationManager
+@using Syncfusion.Blazor.Navigations
+
+<div class="content-container">
+    <SfTab>
+        <TabItems>
+            <TabItem>
+                <ContentTemplate>
+                    <br/>POC to display bank product data sourced from public Open Banking product endpoints
+                        <br /><i>eg. https://api.commbank.com.au/public/cds-au/v1/banking/products</i>
+                        <br /><br />
+                    Technologies include:
+                    <dl style ="margin-left:20px">
+                        <dt>.Net</dt>
+                        <dd>- Blazor</dd>
+                        <dd>- HttpClient</dd>
+                        <dt>Azure</dt>
+                        <dd>- SPA</dd>
+                        <dd>- Blob Storage</dd>
+                        <dd>Synchfusion</dd>
+                        <dd>- Tab</dd>
+                        <dd>- Chart</dd>
+                        <dd>- Grid</dd>
+                        <dd>GITHub</dd>
+                        <dd>- Actions</dd>
+                        <dd>AI Integration</dd>
+                        <dd>- Gemini API</dd>
+                    </dl>
+                </ContentTemplate>
+                <ChildContent>
+                    <TabHeader Text="Overview"></TabHeader>
+                </ChildContent>
+            </TabItem>
+            <TabItem>
+                <ContentTemplate>
+                    <br /><img src="img/Home/AdminCache.png" />
+                    <br /><img src="img/Home/AdminTermDeposits.png" />
+                    <br /><img src="img/Home/AdminResidentialMortgages.png" />
+                    <br /><img src="img/Home/AdminVSCode.png" />
+                </ContentTemplate>
+                <ChildContent>
+                    <TabHeader Text="Administration"></TabHeader>
+                </ChildContent>
+            </TabItem>
+            <TabItem>
+                <ContentTemplate>
+                    <br /><img src="img/Home/APIFunctions.png" />
+                </ContentTemplate>
+                <ChildContent>
+                    <TabHeader Text="API"></TabHeader>
+                </ChildContent>
+            </TabItem>
+        </TabItems>
+    </SfTab>
+</div>

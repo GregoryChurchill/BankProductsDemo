@@ -1,0 +1,55 @@
+﻿@using System.Globalization
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div>Error: @ErrorMessage</div>
+}
+else if (TermDeposits != null && TermDeposits.Count() > 0)
+{
+    <ul>
+        @foreach (var td in TermDeposits)
+        {
+            <li>
+                <div class="card">
+                    <CardContent BankName="@td.BankName"
+                                 BankLogoUrl="@td.BankLogoUrl"
+                                 ProductName="@td.ProductName"
+                                 Description="@td.Description"
+                                 HighestRate="@td.HighestRateFormatted"
+                                 HighestTerm="@td.HighestTermFormatted"
+                                 TermRates="@td.TermRates"
+                                 MinToMaxDeposit="@td.MinimumToMaximumDepositFormatted"
+                                 TermPeriodsSelected="@TermPeriodsSelected"
+                                 ApplyUrl="@td.ApplyUrl"
+                                 LastRefreshed="@(FormatDate(td.LastRefreshed))" />
+                </div>
+            </li>
+        }
+    </ul>
+    @if (ShowCountTotal)
+    {
+        <div class="product-count">@CountTotal</div>
+    }
+    else
+    {
+        <div class="product-count">@CountFiltered of @CountFilteredTotal</div>
+    }
+}
+else
+{
+    <div>No data to display</div>
+}
+@code {
+    [Parameter] public bool ShowCountTotal { get; set; }
+    [Parameter] public int CountTotal { get; set; }
+    [Parameter] public int CountFilteredTotal { get; set; }
+    [Parameter] public int CountFiltered { get; set; }
+    [Parameter] public int TermPeriodsSelected { get; set; }
+    [Parameter] public List<TermDeposit> TermDeposits { get; set; }
+    [Parameter] public EventCallback<TermDeposit> ShowProduct { get; set; }
+    [Parameter] public string ErrorMessage { get; set; }
+
+    private string FormatDate(DateTime dateTime)
+    {
+        return dateTime.ToString("dddd, dd MMMM yyyy h:mm tt");
+    }
+}

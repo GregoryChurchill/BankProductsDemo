@@ -1,0 +1,79 @@
+﻿@page "/charts"
+@using Syncfusion.Blazor.Charts
+@inject NavigationManager NavigationManager
+
+<ListHeader Title="Charts" RoutePath="/charts" />
+<div class="content-container">
+    <SfChart Title="Interest Rate Comparison" Width="@Width" Theme="@Theme">
+        <ChartArea><ChartAreaBorder Width="0"></ChartAreaBorder></ChartArea>
+        <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.DateTime" EdgeLabelPlacement="EdgeLabelPlacement.Shift">
+            <ChartAxisMajorGridLines Width="0"></ChartAxisMajorGridLines>
+        </ChartPrimaryXAxis>
+        <ChartPrimaryYAxis Title="Interest Rate %" Minimum="0" Maximum="10" Interval="1">
+            <ChartAxisLineStyle Width="0"></ChartAxisLineStyle>
+            <ChartAxisMajorTickLines Width="0"></ChartAxisMajorTickLines>
+        </ChartPrimaryYAxis>
+        <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
+        <ChartSeriesCollection>
+            <ChartSeries DataSource="@ChartData" Name="CBA" XName="Period" Width="2"
+                            Opacity="1" YName="CBA" Type="ChartSeriesType.Line">
+                <ChartMarker Visible="true" Width="7" Height="7" IsFilled="true" Shape="ChartShape.Circle">
+                </ChartMarker>
+            </ChartSeries>
+            <ChartSeries DataSource="@ChartData" Name="Westpac" XName="Period" Width="2"
+                            Opacity="1" YName="Westpac" Type="ChartSeriesType.Line">
+                <ChartMarker Visible="true" Width="6" IsFilled="true" Height="6" Shape="ChartShape.Triangle">
+                </ChartMarker>
+            </ChartSeries>
+            <ChartSeries DataSource="@ChartData" Name="NAB" XName="Period" Width="2"
+                            Opacity="1" YName="NAB" Type="ChartSeriesType.Line">
+                <ChartMarker Visible="true" Width="7" IsFilled="true" Height="7" Shape="ChartShape.Diamond">
+                </ChartMarker>
+            </ChartSeries>
+            <ChartSeries DataSource="@ChartData" Name="ANZ" XName="Period" Width="2"
+                            Opacity="1" YName="ANZ" Type="ChartSeriesType.Line">
+                <ChartMarker Visible="true" Width="5" IsFilled="true" Height="5" Shape="ChartShape.Rectangle">
+                </ChartMarker>
+            </ChartSeries>
+            <ChartSeries DataSource="@ChartData" Name="Bank of Sydney" XName="Period" Width="2"
+                            Opacity="1" YName="BOS" Type="ChartSeriesType.Line">
+                <ChartMarker Visible="true" Width="7" IsFilled="true" Height="7" Shape="ChartShape.Pentagon">
+                </ChartMarker>
+            </ChartSeries>
+        </ChartSeriesCollection>
+        <ChartLegendSettings EnableHighlight="true"></ChartLegendSettings>
+    </SfChart>
+</div>
+@code{
+    private Theme Theme { get; set; }
+    public string Width { get; set; } = "90%";
+
+    protected override void OnInitialized()
+    {
+
+    }
+    public class LineChartData
+    {
+        public DateTime Period { get; set; }
+        public double CBA { get; set; }
+        public double Westpac { get; set; }
+        public double NAB { get; set; }
+        public double ANZ { get; set; }
+        public double BOS { get; set; }
+    }
+    public List<LineChartData> ChartData = new List<LineChartData>
+{
+        new LineChartData { Period = new DateTime(2024, 01, 01), CBA = 4.0, Westpac = 9.5, NAB = 7.1, ANZ = 8.2, BOS = 9.3 },
+        new LineChartData { Period = new DateTime(2024, 02, 01), CBA = 2.9, Westpac = 7.5, NAB = 6.8, ANZ = 7.3, BOS = 7.8 },
+        new LineChartData { Period = new DateTime(2024, 03, 01), CBA = 3.4, Westpac = 5.5, NAB = 4.1, ANZ = 7.8, BOS = 6.2  },
+        new LineChartData { Period = new DateTime(2024, 04, 01), CBA = 3.7, Westpac = 3.3, NAB = 2.8, ANZ = 6.8, BOS = 5.3 },
+        new LineChartData { Period = new DateTime(2024, 05, 01), CBA = 2.7, Westpac = 7.8, NAB = 2.8, ANZ = 6.0, BOS = 4.8 },
+        new LineChartData { Period = new DateTime(2024, 06, 01), CBA = 2.5, Westpac = 6.5, NAB = 3.8, ANZ = 5.5, BOS = 4.9 },
+        new LineChartData { Period = new DateTime(2024, 07, 01), CBA = 2.7, Westpac = 5.9, NAB = 3.3, ANZ = 6.5, BOS = 4.4 },
+        new LineChartData { Period = new DateTime(2024, 08, 01), CBA = 2.4, Westpac = 5.6, NAB = 4.7, ANZ = 6.8, BOS = 2.6 },
+        new LineChartData { Period = new DateTime(2024, 09, 01), CBA = 3.5, Westpac = 5.1, NAB = 5.6, ANZ = 6.6, BOS = 2.3 },
+        new LineChartData { Period = new DateTime(2024, 10, 01), CBA = 3.7, Westpac = 4.3, NAB = 2.8, ANZ = 6.8, BOS = 5.3 },
+        new LineChartData { Period = new DateTime(2024, 11, 01), CBA = 2.7, Westpac = 7.8, NAB = 2.8, ANZ = 6.0, BOS = 4.8 },
+        new LineChartData { Period = new DateTime(2024, 12, 01), CBA = 2.5, Westpac = 6.5, NAB = 3.8, ANZ = 5.5, BOS = 4.9 }
+    };
+}

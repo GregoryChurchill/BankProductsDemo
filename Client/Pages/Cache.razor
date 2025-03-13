@@ -1,0 +1,144 @@
+﻿@page "/cache"
+@using Microsoft.AspNetCore.WebUtilities
+@using Newtonsoft.Json
+@using Syncfusion.Blazor.Buttons
+@using System.Text
+@using Syncfusion.Blazor.Popups
+@inject HttpClient httpClient
+@inject NavigationManager navigationManager
+
+<ListHeader Title="Cache" RoutePath="/cache" />
+
+<div id="container">
+    <SfSpinner @bind-Visible="SpinnerVisible"></SfSpinner>
+    <SfGrid @ref="@Grid" DataSource="@CandidateBanks" AllowPaging="true" AllowSorting="true" AllowFiltering="true" Height="390" Width="100%">
+        <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Menu"></GridFilterSettings>
+        <GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Multiple"></GridSelectionSettings>
+        <GridPageSettings PageSize="300" PageSizes="@pagerDropdown"> </GridPageSettings>
+        <GridEvents TValue="CandidateBank"></GridEvents>
+        <GridColumns>
+            <GridColumn Type="ColumnType.CheckBox" Width="50"></GridColumn>
+            <GridColumn Width="150" AllowFiltering="false">
+                <Template>
+                    @{
+                        var candidateBank = (context as CandidateBank);
+                        <img src="@candidateBank.LogoURL" title="@candidateBank.LogoURL" style="height: 20px;" />
+                    }
+                </Template>
+            </GridColumn>
+            <GridColumn Field=@nameof(CandidateBank.Name) HeaderText="Name" Width="230"></GridColumn>
+            <GridColumn Field=@nameof(CandidateBank.DisplayOrder) HeaderText="Order" Width="100"></GridColumn>
+            <GridColumn Field=@nameof(CandidateBank.Active) HeaderText="Active" Width="100"></GridColumn>
+            <GridColumn Field=@nameof(CandidateBank.LastRefreshedFormatted) HeaderText="Last Refreshed" Width="180"></GridColumn>
+            <GridColumn Field=@nameof(CandidateBank.LastBankUpdateFormatted) HeaderText="Last Bank Update" Width="180"></GridColumn>
+            <GridColumn Field=@nameof(CandidateBank.OpenBankingProductListUrl) HeaderText="List URL"></GridColumn>
+        </GridColumns>
+    </SfGrid>
+    <br />
+    <SfButton @ref="RefreshCacheBtn" @onclick="onRefreshCacheBtnClick" @attributes="@GridAttributes" CssClass="buttonStandard" IsToggle="true" Content="@ButtonLabel"></SfButton>
+
+    <ModalError Message="@modalMessage" OnClose="@CloseModal" Show="@showModal" />
+</div>
+
+@code {
+    SfGrid<CandidateBank> Grid;
+    public List<int> SelectedRowIndexes { get; set; }
+    public List<CandidateBank> SelectedBanks { get; set; }
+    public int[] TotalValue { get; set; }
+    public bool SpinnerVisible;
+    private Dictionary<string, object> GridAttributes { get; set; } = new Dictionary<string, object>();
+    private bool showModal;
+    private string modalMessage = "";
+    SfButton RefreshCacheBtn;
+    public string ButtonLabel = "Refresh Cache";
+    string[] pagerDropdown = new string[] { "All", "100", "200", "300" };
+
+    private List<CandidateBank> CandidateBanks { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        GridAttributes.Add("disable", "no");
+
+        var response = await httpClient.GetAsync($"api/GetCandidateBanks?IncludeLastUpdated=true");
+
+        if (response.IsSuccessStatusCode)
+        {
+            var json = await response.Content.ReadAsStringAsync();
+
+            CandidateBanks = JsonConvert.DeserializeObject<List<CandidateBank>>(json);
+        }
+
+        var uri = navigationManager.ToAbsoluteUri(navigationManager.Uri);
+
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("error", out var error))
+            ShowModal(error);
+    }
+
+    private void onRefreshCacheBtnClick(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
+    {
+        if (RefreshCacheBtn.Content == "Refresh Cache")
+        {
+            DoCacheRefresh();
+        }
+    }
+
+    public async Task DoCacheRefresh()
+    {
+        SelectedBanks = await this.Grid.GetSelectedRecordsAsync();
+
+        var bankList = new List<string>();
+
+        try
+        {
+            if (SelectedBanks.Count > 0)
+            {
+                SpinnerVisible = true;
+                this.ButtonLabel = "Refreshing...";
+                GridAttributes["disable"] = "yes";
+
+                foreach (var bank in SelectedBanks)
+                {
+                    bankList.Add(bank.Name);
+                }
+
+                var json = JsonConvert.SerializeObject(bankList);
+                var httpContent = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await httpClient.PostAsync($"api/RefreshCache", httpContent);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    navigationManager.NavigateTo("/products", true);
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    var parameters = new Dictionary<string, string> { { "error", error } };
+                    navigationManager.NavigateTo(QueryHelpers.AddQueryString("/cache", parameters), true);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            var error = ex.Message;
+            var parameters = new Dictionary<string, string> { { "error", error } };
+            navigationManager.NavigateTo(QueryHelpers.AddQueryString("/cache", parameters), true);
+        }
+    }
+
+    private void ShowModal(string message)
+    {
+        showModal = true;
+        modalMessage = message;
+    }
+
+    private void CloseModal()
+    {
+        showModal = false;
+    }
+}
+<style>
+    .e-grid1 .e-gridheader1 .e-columnheader1 {
+        display:none;
+    }
+</style>
